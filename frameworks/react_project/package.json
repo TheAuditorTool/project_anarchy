@@ -1,0 +1,58 @@
+{
+  "name": "react-project-misconfig",
+  "version": "1.0.0",
+  "description": "React project with intentional misconfigurations",
+  "main": "index.js",
+  "scripts": {
+    "start": "webpack serve --mode development",
+    "build": "webpack --mode production",
+    "test": "jest",
+    "lint": "eslint src/"
+  },
+  "dependencies": {
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2",
+    "react-router-dom": "^5.3.0",
+    "axios": "^0.21.1",
+    "redux": "^4.1.0",
+    "react-redux": "^7.2.4",
+    "jest": "^27.0.0",
+    "enzyme": "^3.11.0",
+    "@testing-library/react": "^12.0.0",
+    "@testing-library/jest-dom": "^5.14.0",
+    "moment": "^2.29.1",
+    "lodash": "^4.17.20"
+  },
+  "devDependencies": {
+    "webpack": "^5.40.0",
+    "webpack-cli": "^4.7.0",
+    "webpack-dev-server": "^3.11.2",
+    "babel-loader": "^8.2.2",
+    "@babel/core": "^7.14.6",
+    "@babel/preset-env": "^7.14.7",
+    "@babel/preset-react": "^7.14.5",
+    "css-loader": "^5.2.6",
+    "style-loader": "^2.0.0",
+    "html-webpack-plugin": "^5.3.2",
+    "eslint": "^7.29.0",
+    "eslint-plugin-react": "^7.24.0"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/example/react-misconfig"
+  },
+  "author": "Project Anarchy",
+  "license": "MIT"
+}

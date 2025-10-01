@@ -1,0 +1,14 @@
+{
+  "name": "@monorepo/api",
+  "version": "1.0.0",
+  "description": "API package with circular dependency back to core",
+  "main": "index.js",
+  "dependencies": {
+    "@monorepo/core": "1.0.0"
+  },
+  "scripts": {
+    "build": "echo 'Building API package'",
+    "test": "echo 'Testing API package'",
+    "serve": "node index.js"
+  }
+}

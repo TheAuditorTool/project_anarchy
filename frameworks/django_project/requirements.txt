@@ -1,0 +1,13 @@
+# ERROR 237: Old Django version with known vulnerabilities
+Django==3.2.1
+psycopg2-binary==2.8.6
+gunicorn==20.0.4
+django-debug-toolbar==3.2
+django-cors-headers==3.7.0
+celery==5.0.5
+redis==3.5.3
+Pillow==8.1.0
+djangorestframework==3.12.2
+django-filter==2.4.0
+django-crispy-forms==1.11.0
+pymemcache==3.4.0

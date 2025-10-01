@@ -1,0 +1,63 @@
+{
+  "common": {
+    "welcome": "ยินดีต้อนรับ",
+    "logout": "ออกจากระบบ",
+    "login": "เข้าสู่ระบบ",
+    "save": "บันทึก",
+    "cancel": "ยกเลิก",
+    "delete": "ลบ",
+    "edit": "แก้ไข",
+    "loading": "กำลังโหลด...",
+    "error": "เกิดข้อผิดพลาด"
+  },
+  "navigation": {
+    "home": "หน้าแรก",
+    "products": "สินค้า",
+    "cart": "ตะกร้า",
+    "profile": "โปรไฟล์",
+    "settings": "ตั้งค่า",
+    "admin": "แผงควบคุม"
+  },
+  // ERROR 336: Missing translations for variants keys
+  // The entire "variants" section is missing, causing fallback to key names
+  
+  "cart": {
+    "title": "ตะกร้าสินค้า",
+    "empty": "ตะกร้าของคุณว่างเปล่า",
+    "total": "รวม",
+    "subtotal": "ยอดรวม",
+    "tax": "ภาษี",
+    "shipping": "ค่าจัดส่ง",
+    "checkout": "ชำระเงิน",
+    "continueShopping": "ซื้อสินค้าต่อ",
+    "removeItem": "ลบสินค้า",
+    "updateQuantity": "อัพเดทจำนวน",
+    "applyCoupon": "ใช้คูปอง",
+    "couponCode": "รหัสคูปอง",
+    "discount": "ส่วนลด",  // ERROR 337: Syntax error - trailing comma in JSON
+  },
+  "product": {
+    "addToCart": "เพิ่มลงตะกร้า",
+    "outOfStock": "สินค้าหมด",
+    "inStock": "มีสินค้า",
+    "description": "รายละเอียด",
+    "specifications": "ข้อมูลจำเพาะ",
+    "reviews": "รีวิว",
+    "relatedProducts": "สินค้าที่เกี่ยวข้อง"
+  },
+  "errors": {
+    "required": "จำเป็นต้องกรอกข้อมูลนี้",
+    "invalidEmail": "อีเมลไม่ถูกต้อง",
+    "passwordMismatch": "รหัสผ่านไม่ตรงกัน",
+    "networkError": "เกิดข้อผิดพลาดเครือข่าย กรุณาลองใหม่",
+    "unauthorized": "คุณไม่มีสิทธิ์ดำเนินการนี้",
+    "notFound": "ไม่พบข้อมูล",
+    "serverError": "เกิดข้อผิดพลาดเซิร์ฟเวอร์ กรุณาลองใหม่ภายหลัง"
+  },
+  "success": {
+    "saved": "บันทึกสำเร็จ",
+    "deleted": "ลบสำเร็จ",
+    "updated": "อัพเดทสำเร็จ",
+    "addedToCart": "เพิ่มลงตะกร้าแล้ว"
+  }
+}

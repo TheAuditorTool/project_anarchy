@@ -1,0 +1,14 @@
+{
+  "name": "@monorepo/ui",
+  "version": "1.0.0",
+  "description": "UI package depending on core",
+  "main": "index.js",
+  "dependencies": {
+    "@monorepo/core": "1.0.0"
+  },
+  "scripts": {
+    "build": "echo 'Building UI package'",
+    "test": "echo 'Testing UI package'",
+    "start": "node index.js"
+  }
+}

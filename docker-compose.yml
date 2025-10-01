@@ -1,0 +1,121 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    container_name: production_web
+    # ERROR 354: Using host network mode (bypasses network isolation)
+    network_mode: host
+    # Should use: networks: - app_network
+    
+    # Running privileged container (major security risk)
+    privileged: true
+    
+    # Mounting Docker socket (container escape risk)
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - .:/app  # Mounting entire source code including .git
+      - /etc/passwd:/etc/passwd:ro  # Why mount system files?
+      - /root/.ssh:/root/.ssh:ro  # Mounting SSH keys!
+    
+    # No resource limits
+    # Should have:
+    # deploy:
+    #   resources:
+    #     limits:
+    #       cpus: '1'
+    #       memory: 512M
+    
+    environment:
+      - NODE_ENV=production
+      - DB_PASSWORD=admin123  # Hardcoded password
+    
+    # No restart policy
+    # Should have: restart: unless-stopped
+    
+    # Dangerous capabilities
+    cap_add:
+      - ALL  # Adding ALL capabilities!
+    
+    # No read-only root filesystem
+    # Should have: read_only: true
+    
+    # No security options
+    # Should have:
+    # security_opt:
+    #   - no-new-privileges:true
+    
+  database:
+    image: postgres:latest  # Not pinning version
+    container_name: production_db
+    
+    # ERROR 355: Database exposed to host network
+    ports:
+      - "0.0.0.0:5432:5432"  # Binding to all interfaces!
+    # Should bind to specific interface or use internal network only
+    
+    environment:
+      # ERROR 356: Weak default credentials in plain text
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin123
+      POSTGRES_DB: production
+      # Should use Docker secrets or external secret management
+    
+    volumes:
+      - ./db_data:/var/lib/postgresql/data  # Data on host filesystem
+      - ./backups:/backups  # Backup directory accessible
+    
+    # No backup strategy defined
+    # No encryption at rest
+    # No network segmentation
+    
+  redis:
+    image: redis:latest  # Not pinning version
+    container_name: production_cache
+    command: redis-server --requirepass password123  # Weak password in command
+    ports:
+      - "0.0.0.0:6379:6379"  # Redis exposed to internet!
+    
+    # No persistence configuration
+    # No maxmemory policy
+    # No ACL configuration
+    
+  # Dangerous debugging service in production
+  debug:
+    image: nicolaka/netshoot
+    container_name: debug_tools
+    network_mode: host
+    privileged: true
+    pid: host  # Access to host processes!
+    volumes:
+      - /:/host  # Entire host filesystem mounted!
+    command: sleep infinity
+    
+# No network definition (using default bridge)
+# Should define custom networks:
+# networks:
+#   app_network:
+#     driver: bridge
+#     internal: true
+#   db_network:
+#     driver: bridge
+#     internal: true
+
+# No secrets management
+# Should use:
+# secrets:
+#   db_password:
+#     external: true
+#   api_keys:
+#     external: true
+
+# Additional issues:
+# - No health checks defined
+# - No logging configuration
+# - No container ordering with depends_on
+# - Mixing development and production configs
+# - No TLS/SSL configuration
+# - No firewall rules
+# - Using 'latest' tags instead of specific versions
+# - No volume encryption
+# - No audit logging

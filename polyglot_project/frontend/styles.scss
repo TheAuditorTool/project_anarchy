@@ -1,0 +1,12 @@
+// ERROR 275: Sass styles in polyglot project
+// CSS preprocessor adding complexity
+
+$primary-color: #333;
+
+.container {
+  color: $primary-color;
+  
+  &:hover {
+    color: lighten($primary-color, 20%);
+  }
+}

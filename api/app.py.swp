@@ -1,0 +1,2 @@
+b0VIM 8.2      temp_swap_file
+# FLAW 146: Temporary swap file committed to repository (should be in .gitignore)

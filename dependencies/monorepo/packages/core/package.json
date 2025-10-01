@@ -1,0 +1,13 @@
+{
+  "name": "@monorepo/core",
+  "version": "1.0.0",
+  "description": "Core package with circular dependency on API",
+  "main": "index.js",
+  "dependencies": {
+    "@monorepo/api": "1.0.0"
+  },
+  "scripts": {
+    "build": "echo 'Building core package'",
+    "test": "echo 'Testing core package'"
+  }
+}

@@ -1,0 +1,22 @@
+# Fake Errors: 5 (across all dependency files) + 5 outdated packages
+# Original errors:
+# 1. Typosquatting: `requets` instead of `requests`. (deps.py)
+# 2. Known CVEs: `fastapi==0.68.0` has known vulnerabilities. (deps.py)
+# 3. Version Mismatch: `pyproject.toml` specifies a different version of `fastapi`. (deps.py)
+# 4. Git Dependency: `package.json` points to a mutable branch. (deps.py)
+# 5. Committed Artifacts: `node_modules` directory is checked into git. (aud index)
+# New errors (55-59): All packages using ancient version 0.0.001
+
+fastapi==0.116.1
+uvicorn==0.35.0
+requets==0.1
+
+# Phase 4: Intentionally outdated packages
+requets==0.0.001
+fastapi==0.116.1
+numpy==2.3.2
+pandas==2.3.1
+pytest==8.4.1
+sqlalchemy==2.0.43
+pydantic==2.11.7
+requests  # Added for final_coverage_completion.py

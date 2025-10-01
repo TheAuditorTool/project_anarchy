@@ -1,0 +1,107 @@
+# Coverage.py configuration file
+# ERROR 348: Misleading coverage configuration that inflates metrics
+
+[run]
+# Excluding important files from coverage, making metrics look better
+omit = 
+    # Excluding all test files (shouldn't be excluded entirely)
+    */tests/*
+    */test_*.py
+    *_test.py
+    
+    # Excluding complex files that would lower coverage
+    */api/complex_logic.py
+    */processing/data_pipeline.py
+    */services/payment_processor.py
+    
+    # Excluding error handlers (critical code!)
+    */error_handlers/*
+    */exceptions.py
+    
+    # Excluding all database migrations
+    */migrations/*
+    
+    # Excluding configuration files (some contain logic)
+    */config/*.py
+    */settings/*.py
+
+# Including only simple files to boost coverage
+include =
+    */utils/simple_helpers.py
+    */models/basic_models.py
+    */__init__.py
+
+[report]
+# Hiding missing lines to make coverage look better
+show_missing = False
+
+# Setting artificially low precision
+precision = 0
+
+# Excluding critical branches from coverage
+exclude_lines =
+    # Pragma to exclude lines
+    pragma: no cover
+    
+    # Don't complain about missing debug-only code
+    def __repr__
+    def __str__
+    
+    # Don't complain if tests don't hit defensive assertion code
+    raise AssertionError
+    raise NotImplementedError
+    
+    # Don't complain about abstract methods
+    @abstract
+    @abstractmethod
+    
+    # Excluding all error handling! (Very bad)
+    except:
+    except Exception
+    except BaseException:
+    raise
+    
+    # Excluding all logging
+    log.
+    logger.
+    logging.
+    
+    # Excluding important conditional code
+    if __name__ == .__main__.:
+    if TYPE_CHECKING:
+    if DEBUG:
+    if settings.DEBUG:
+    
+    # Excluding all early returns (hides complexity)
+    return None
+    return False
+    return True
+    
+    # Excluding all pass statements
+    pass
+    
+    # Excluding all continue/break (control flow)
+    continue
+    break
+
+# Ignoring errors to prevent failure on low coverage
+ignore_errors = True
+
+[html]
+# HTML report configuration
+directory = coverage_html_report
+
+# Making it look like we have good coverage
+title = "Project Coverage Report - 98% Coverage!"  # Misleading title
+
+[xml]
+# XML output for CI/CD tools
+output = coverage.xml
+
+[json]
+# JSON output with prettified (misleading) presentation
+output = coverage.json
+pretty_print = true
+
+# Note: With these exclusions, a project with actual 40% coverage
+# might show 98% coverage in reports, hiding critical untested code

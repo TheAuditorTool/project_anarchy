@@ -1,0 +1,51 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/rush/v5/rush.schema.json",
+  "rushVersion": "5.100.0",
+  "pnpmVersion": "8.6.0",
+  "nodeSupportedVersionRange": ">=14.15.0 <19.0.0",
+  
+  "projects": [
+    {
+      "packageName": "@monorepo/core",
+      "projectFolder": "packages/core",
+      "reviewCategory": "production",
+      "shouldPublish": true
+    },
+    {
+      "packageName": "@monorepo/ui",
+      "projectFolder": "packages/ui",
+      "reviewCategory": "production",
+      "shouldPublish": true
+    },
+    {
+      "packageName": "@monorepo/api",
+      "projectFolder": "packages/api",
+      "reviewCategory": "production",
+      "shouldPublish": true
+    }
+  ],
+
+  "repository": {
+    "url": "https://github.com/example/monorepo-nightmare",
+    "defaultBranch": "main",
+    "defaultRemote": "origin"
+  },
+
+  "eventHooks": {
+    "preRushInstall": [],
+    "postRushInstall": [],
+    "preRushBuild": [],
+    "postRushBuild": []
+  },
+
+  "variants": [],
+
+  "telemetryEnabled": false,
+
+  "ensureConsistentVersions": true,
+  "allowMostlyStandardPackageNames": false,
+  "approvedPackagesPolicy": {
+    "reviewCategories": ["production", "development"],
+    "ignoredNpmScopes": ["@types"]
+  }
+}

@@ -1,0 +1,20 @@
+# ERROR 244: Outdated FastAPI version with known vulnerabilities
+fastapi==0.95.0
+uvicorn==0.17.0
+pydantic==1.8.2
+python-multipart==0.0.5
+python-jose==3.2.0
+passlib==1.7.4
+bcrypt==3.2.0
+sqlalchemy==1.4.31
+psycopg2-binary==2.9.1
+redis==4.1.0
+celery==5.2.3
+pymongo==4.0.1
+elasticsearch==7.17.0
+boto3==1.20.0
+stripe==2.65.0
+sendgrid==6.9.0
+aiofiles==0.8.0
+jinja2==3.0.3
+itsdangerous==2.0.1

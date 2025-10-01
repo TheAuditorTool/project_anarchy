@@ -1,0 +1,4 @@
+Valid text
+Ã(Invalid UTF-8
+More valid text
+ ¡Bad bytes

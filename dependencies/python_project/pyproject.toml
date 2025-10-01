@@ -1,0 +1,30 @@
+[project]
+name = "python-dependency-nightmare"
+version = "1.0.0"
+description = "A project with intentionally conflicting dependencies for TheAuditor testing"
+authors = [{name = "Project Anarchy Team", email = "test@example.com"}]
+requires-python = ">=3.8"
+
+# ERROR 217: Conflicting pandas version (2.0.0 vs requirements.txt's 1.5.0)
+# ERROR 218: Conflicting numpy version (>=1.25 vs requirements.txt's <1.24)
+dependencies = [
+    "pandas==2.0.0",
+    "numpy>=1.25",
+    "requests>=2.31.0",
+    "fastapi==0.100.0",
+    "sqlalchemy>=2.0.0",
+    "pytest>=7.4.0",
+    "black==23.0.0"
+]
+
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.black]
+line-length = 88
+target-version = ['py38', 'py39', 'py310']
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]

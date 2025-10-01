@@ -1,0 +1,13 @@
+# ERROR 215: Conflicting pandas version (1.5.0)
+pandas==1.5.0
+
+# ERROR 216: Conflicting numpy version constraint (<1.24)
+numpy<1.24
+
+# Additional dependencies for realistic project
+requests>=2.28.0
+fastapi==0.95.0
+sqlalchemy~=1.4.0
+pytest>=7.0.0
+black==22.10.0
+flake8>=5.0.0

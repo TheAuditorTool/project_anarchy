@@ -1,0 +1,8 @@
+[tool.poetry.dependencies]
+python = "^1.1.1.1"
+fastapi = "0.1.0"
+black = "0.0.001"
+mypy = "0.0.001"
+poetry = "0.0.001"
+ruff = "0.0.001"
+rich = "0.0.001"
