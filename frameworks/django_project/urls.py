@@ -8,6 +8,9 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 
+# Import taint flow views for Angular cross-boundary testing
+from . import taint_views
+
 urlpatterns = [
     # Admin site enabled with default URL (security issue)
     path('admin/', admin.site.urls),
@@ -22,6 +25,16 @@ urlpatterns = [
     # Sensitive endpoints without protection
     path('api/users/', include('users.urls')),
     path('api/auth/', include('auth.urls')),
+
+    # Taint flow routes for Angular cross-boundary testing
+    path('api/users/search', taint_views.search_users, name='search_users'),
+    path('api/users/<int:user_id>', taint_views.user_detail, name='user_detail'),
+    path('api/users/<int:user_id>/avatar', taint_views.upload_avatar, name='upload_avatar'),
+    path('api/users/<int:user_id>/notification', taint_views.render_notification, name='render_notification'),
+    path('api/admin/exec', taint_views.admin_exec, name='admin_exec'),
+    path('api/webhooks/register', taint_views.register_webhook, name='register_webhook'),
+    path('api/users/create', taint_views.create_user, name='create_user'),
+    path('api/files/read', taint_views.read_file, name='read_file'),
 ]
 
 # Serving media files in production (insecure)

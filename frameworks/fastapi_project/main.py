@@ -5,12 +5,15 @@ Errors 241-242: No CORS middleware, No rate limiting
 """
 
 from fastapi import FastAPI, HTTPException, Depends
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional, List
 import uvicorn
 
-# ERROR 241: No CORS middleware configured
-# Should have: from fastapi.middleware.cors import CORSMiddleware
+# Import taint flow routes for cross-boundary testing
+from taint_routes import router as taint_router
+
+# ERROR 241: CORS middleware configured insecurely
 app = FastAPI(
     title="FastAPI Misconfigured Project",
     version="1.0.0",
@@ -18,6 +21,18 @@ app = FastAPI(
     docs_url="/docs",  # Swagger UI exposed
     redoc_url="/redoc",  # ReDoc exposed
 )
+
+# Insecure CORS configuration - allows all origins
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # ERROR: Allows any origin
+    allow_credentials=True,  # ERROR: Credentials with wildcard origin
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Include taint flow routes for Vue frontend cross-boundary testing
+app.include_router(taint_router, prefix="", tags=["taint-flows"])
 
 # ERROR 242: No rate limiting implemented
 # Should have rate limiting middleware or decorator

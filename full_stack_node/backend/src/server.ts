@@ -10,6 +10,7 @@ import morgan from 'morgan';
 import compression from 'compression';
 import { testConnection, syncDatabase } from './config/database';
 import userRoutes from './routes/user.routes';
+import taintRoutes from './routes/taint.routes';
 
 // Create Express application
 const app = express();
@@ -56,6 +57,7 @@ app.use((req, res, next) => {
 
 // API Routes
 app.use('/api/users', userRoutes);
+app.use('/api', taintRoutes);  // Taint flow routes for cross-boundary testing
 
 // Additional routes with inline handlers
 app.get('/api/status', (req, res) => {
