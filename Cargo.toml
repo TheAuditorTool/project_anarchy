@@ -1,0 +1,37 @@
+[workspace]
+resolver = "2"
+members = [
+    "rust_backend",
+    "anarchy_commerce/services/payments",
+    "anarchy_commerce/services/search"
+]
+
+[workspace.package]
+version = "1.0.0"
+edition = "2021"
+authors = ["Project Anarchy Team"]
+description = "Unified polyglot test repository for code auditing tools (403 intentional errors)"
+repository = "https://github.com/example/project-anarchy"
+license = "MIT"
+
+[workspace.dependencies]
+actix-web = "4"
+actix-cors = "0.7"
+tokio = { version = "1", features = ["full"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+reqwest = { version = "0.11", features = ["json"] }
+env_logger = "0.10"
+dotenv = "0.15"
+thiserror = "1"
+anyhow = "1"
+
+# Profile for development (fast compile)
+[profile.dev]
+opt-level = 0
+debug = true
+
+# Profile for release (optimized)
+[profile.release]
+opt-level = 3
+lto = true

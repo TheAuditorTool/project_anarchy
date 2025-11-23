@@ -1,6 +1,22 @@
 {
-  "name": "anarchy-frontend",
-  "version": "0.1.0",
+  "name": "project-anarchy",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Unified polyglot test repository for code auditing tools (403 intentional errors)",
+  "workspaces": [
+    "gateway",
+    "frontend",
+    "full_stack_node/frontend",
+    "full_stack_node/backend"
+  ],
+  "scripts": {
+    "start:gateway": "npm run start -w gateway",
+    "dev:gateway": "npm run dev -w gateway",
+    "start:all": "concurrently \"npm run start:gateway\" \"npm run start:api\" \"npm run start:pipeline\" \"npm run start:rust\"",
+    "start:api": "cd api && uvicorn app:app --port 8000",
+    "start:pipeline": "cd python_pipeline && uvicorn api.fastapi_endpoint:app --port 8001",
+    "start:rust": "cd rust_backend && cargo run"
+  },
   "dependencies": {
     "moment": "2.30.1",
     "react": "19.1.1",
@@ -8,5 +24,21 @@
     "lodash": "4.17.21",
     "axios": "1.11.0",
     "webpack": "5.101.1"
-  }
+  },
+  "devDependencies": {
+    "concurrently": "^8.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/example/project-anarchy"
+  },
+  "keywords": [
+    "security-testing",
+    "sast",
+    "polyglot",
+    "taint-analysis"
+  ]
 }

@@ -4,12 +4,89 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Project Anarchy is a **test repository for code auditing tools** (specifically TheAuditor). It contains two main sections:
+Project Anarchy is a **test repository for code auditing tools** (specifically TheAuditor). It contains **403 intentional errors** across multiple connected services with **real cross-boundary data flows**.
 
-1. **`anarchy_commerce/`** - A realistic polyglot e-commerce monorepo (use this for taint analysis testing)
-2. **Legacy chaos** - The original isolated framework demos (kept for stress testing/parsing)
+### Architecture Options
 
-## Realistic Monorepo: anarchy_commerce/
+1. **Unified Root System** (RECOMMENDED) - The main connected architecture using `gateway/`, `api/`, `python_pipeline/`, `rust_backend/`, `frontend/`
+2. **`anarchy_commerce/`** - A separate polyglot e-commerce monorepo (alternative taint analysis testing)
+3. **Isolated demos** - Framework-specific tests in `frameworks/`, `graph_nightmares/`, etc.
+
+---
+
+## Unified Root System (Primary Architecture)
+
+The root project is now a **connected polyglot system** with real data flows:
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                        project_anarchy/                              │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                      │
+│  frontend/services/api_service.js                                    │
+│       │                                                              │
+│       │ fetch()                                                      │
+│       ▼                                                              │
+│  ┌─────────────┐                                                     │
+│  │   gateway/  │  :4000 (Node.js/Express)                           │
+│  │  src/index.js                                                     │
+│  └──────┬──────┘                                                     │
+│         │                                                            │
+│    ┌────┴─────┬─────────────┬─────────────┐                         │
+│    │          │             │             │                         │
+│    ▼          ▼             ▼             ▼                         │
+│ ┌──────┐  ┌────────────┐  ┌─────────────────┐  ┌───────────────┐   │
+│ │ api/ │  │python_     │  │ rust_backend/   │  │ (future svc)  │   │
+│ │:8000 │  │pipeline/   │  │ :8080           │  │               │   │
+│ │      │  │:8001       │  │                 │  │               │   │
+│ └──────┘  └────────────┘  └─────────────────┘  └───────────────┘   │
+│                                                                      │
+│  Connected: ~90 errors with real taint flows                        │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+### Data Flows (Real Cross-Boundary Taint)
+
+| Flow | Source | Path | Sink |
+|------|--------|------|------|
+| SQL Injection | `searchUsers(term)` | frontend → gateway → api/app.py | db.py:18 |
+| Command Injection | `executeCommand(cmd)` | frontend → gateway → rust_backend | main.rs:109 |
+| Path Traversal | `readFile(path)` | frontend → gateway → rust_backend | main.rs:143 |
+| Code Injection | `importCSV(path)` | frontend → gateway → python_pipeline | data_ingestion.py:33 |
+| SSRF | `fetchExternalUrl(url)` | frontend → gateway → rust_backend | main.rs:240 |
+
+### Running the Unified System
+
+```bash
+# Terminal 1: Gateway
+cd gateway && npm install && npm start     # :4000
+
+# Terminal 2: Python API
+cd api && uvicorn app:app --port 8000      # :8000
+
+# Terminal 3: Python Pipeline
+cd python_pipeline && uvicorn api.fastapi_endpoint:app --port 8001  # :8001
+
+# Terminal 4: Rust Backend
+cd rust_backend && cargo run               # :8080
+```
+
+### Test Commands
+```bash
+# SQL Injection
+curl "http://localhost:4000/api/users/search?username=admin'%20OR%20'1'='1"
+
+# Path Traversal
+curl "http://localhost:4000/api/files/read?path=../../../etc/passwd"
+
+# Command Injection
+curl -X POST http://localhost:4000/api/exec -H "Content-Type: application/json" \
+  -d '{"command": "whoami", "args": []}'
+```
+
+---
+
+## Alternative: anarchy_commerce/
 
 This is a properly structured polyglot monorepo that your manifest detection can parse:
 
@@ -132,9 +209,21 @@ Do NOT use for:
 
 | What you're testing | Use |
 |---------------------|-----|
-| Cross-boundary taint analysis | `anarchy_commerce/` |
+| Cross-boundary taint analysis | **Root system** (`gateway/` + `api/` + `rust_backend/` + `python_pipeline/`) |
+| Alternative polyglot monorepo | `anarchy_commerce/` |
 | Manifest/workspace detection | `anarchy_commerce/` |
-| Polyglot indexing | `anarchy_commerce/` |
+| Polyglot indexing | Root or `anarchy_commerce/` |
 | Framework detection | Root (all frameworks) |
 | Parser stress testing | Root (all the chaos) |
 | Individual vuln patterns | `frameworks/*/`, `api/`, `rust_backend/` |
+
+## Key Files for Connected System
+
+| Component | Key File | Purpose |
+|-----------|----------|---------|
+| Gateway | `gateway/src/index.js` | Routes all requests |
+| Frontend | `frontend/services/api_service.js` | Client-side API calls |
+| Python API | `api/app.py` | User operations, auth |
+| Python Pipeline | `python_pipeline/api/fastapi_endpoint.py` | Data processing |
+| Rust Backend | `rust_backend/src/main.rs` | Performance-critical ops |
+| Architecture Doc | `ARCHITECTURE.md` | Full system documentation |

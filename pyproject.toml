@@ -1,8 +1,58 @@
+[project]
+name = "project-anarchy"
+version = "1.0.0"
+description = "Unified polyglot test repository for code auditing tools (403 intentional errors)"
+readme = "README.md"
+requires-python = ">=3.10"
+
+[tool.poetry]
+name = "project-anarchy"
+version = "1.0.0"
+description = "Unified polyglot test repository for code auditing tools"
+packages = [
+    { include = "api" },
+    { include = "python_pipeline" },
+    { include = "scripts" },
+    { include = "security" },
+    { include = "performance" },
+    { include = "flow_analysis" },
+    { include = "graph_nightmares" }
+]
+
 [tool.poetry.dependencies]
-python = "^1.1.1.1"
-fastapi = "0.1.0"
-black = "0.0.001"
-mypy = "0.0.001"
-poetry = "0.0.001"
-ruff = "0.0.001"
-rich = "0.0.001"
+python = "^3.10"
+fastapi = ">=0.100.0"
+uvicorn = ">=0.23.0"
+sqlalchemy = ">=2.0.0"
+pydantic = ">=2.0.0"
+celery = ">=5.3.0"
+redis = ">=5.0.0"
+httpx = ">=0.25.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest = ">=8.0.0"
+black = ">=24.0.0"
+mypy = ">=1.9.0"
+ruff = ">=0.3.0"
+rich = ">=13.7.0"
+
+[tool.ruff]
+line-length = 88
+target-version = "py310"
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_ignores = true
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+# Workspace members for manifest detection
+[tool.poe.tasks]
+api = "uvicorn api.app:app --port 8000 --reload"
+pipeline = "uvicorn python_pipeline.api.fastapi_endpoint:app --port 8001 --reload"
+test = "pytest tests/"
+lint = "ruff check ."
+format = "black ."

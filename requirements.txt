@@ -1,3 +1,19 @@
+# =============================================================================
+# PROJECT ANARCHY - Root Requirements
+# =============================================================================
+# This is a unified polyglot monorepo with connected Python packages:
+#   - api/              (FastAPI - port 8000)
+#   - python_pipeline/  (FastAPI + Celery - port 8001)
+#   - scripts/          (Utility scripts)
+#   - security/         (Security test scenarios)
+#   - performance/      (Performance test scenarios)
+#   - flow_analysis/    (Flow analysis test scenarios)
+#
+# Install: pip install -r requirements.txt
+# Run API: uvicorn api.app:app --port 8000
+# Run Pipeline: uvicorn python_pipeline.api.fastapi_endpoint:app --port 8001
+# =============================================================================
+
 # Fake Errors: 5 (across all dependency files) + 5 outdated packages
 # Original errors:
 # 1. Typosquatting: `requets` instead of `requests`. (deps.py)
@@ -7,16 +23,25 @@
 # 5. Committed Artifacts: `node_modules` directory is checked into git. (aud index)
 # New errors (55-59): All packages using ancient version 0.0.001
 
+# Core dependencies for connected services
 fastapi==0.116.1
 uvicorn==0.35.0
+sqlalchemy==2.0.43
+pydantic==2.11.7
+celery>=5.3.0
+redis>=5.0.0
+httpx>=0.25.0
+
+# Intentional typosquatting vulnerability (Error #1)
 requets==0.1
 
 # Phase 4: Intentionally outdated packages
-requets==0.0.001
-fastapi==0.116.1
 numpy==2.3.2
 pandas==2.3.1
 pytest==8.4.1
-sqlalchemy==2.0.43
-pydantic==2.11.7
 requests  # Added for final_coverage_completion.py
+
+# Editable installs for local packages (workspace members)
+-e ./api
+-e ./python_pipeline
+-e ./scripts
