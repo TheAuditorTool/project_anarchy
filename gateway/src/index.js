@@ -48,6 +48,9 @@ const SERVICES = {
 
   // rust_backend/ - Performance-critical operations (search, file ops, calc)
   rustBackend: process.env.RUST_BACKEND_URL || 'http://localhost:8080',
+
+  // go_notifications/ - Notification service (webhooks, email, templates)
+  goNotifications: process.env.GO_NOTIFICATIONS_URL || 'http://localhost:8082',
 };
 
 // -----------------------------------------------------------------------------
@@ -362,6 +365,156 @@ app.post('/api/users/:userId/full-enrich', async (req, res) => {
 });
 
 // -----------------------------------------------------------------------------
+// ROUTE GROUP 5: Go Notifications Routes (go_notifications/ folder)
+// Handles: Email, webhooks, Slack, file logging, templates
+// TAINT: User input flows to Go with SSRF, template injection, command injection
+// -----------------------------------------------------------------------------
+
+app.post('/api/notifications/send', async (req, res) => {
+  try {
+    // TAINT: All body fields flow to go_notifications/internal/api/handlers.go
+    // Recipient can be SSRF target, message can have template injection
+    const response = await axios.post(
+      `${SERVICES.goNotifications}/api/notify`,
+      req.body,
+      { headers: { 'X-API-Key': req.headers['x-api-key'] || 'dev-api-key-12345' } }
+    );
+    res.json(response.data);
+  } catch (error) {
+    res.status(error.response?.status || 500).json({
+      error: error.response?.data || error.message,
+      service: 'go-notifications',
+    });
+  }
+});
+
+app.post('/api/notifications/template', async (req, res) => {
+  try {
+    // TAINT: template name flows to go_notifications template injection (SSTI)
+    // data fields flow to template rendering with dangerous functions
+    const response = await axios.post(
+      `${SERVICES.goNotifications}/api/notify/template`,
+      req.body,
+      { headers: { 'X-API-Key': req.headers['x-api-key'] || 'dev-api-key-12345' } }
+    );
+    res.json(response.data);
+  } catch (error) {
+    res.status(error.response?.status || 500).json({
+      error: error.response?.data || error.message,
+    });
+  }
+});
+
+app.post('/api/notifications/webhook/test', async (req, res) => {
+  try {
+    // TAINT: url field flows to go_notifications SSRF vulnerability!
+    // Can access internal services, cloud metadata endpoints
+    const response = await axios.post(
+      `${SERVICES.goNotifications}/api/webhook/test`,
+      req.body,
+      { headers: { 'X-API-Key': req.headers['x-api-key'] || 'dev-api-key-12345' } }
+    );
+    res.json(response.data);
+  } catch (error) {
+    res.status(error.response?.status || 500).json({
+      error: error.response?.data || error.message,
+    });
+  }
+});
+
+app.post('/api/notifications/hooks/execute', async (req, res) => {
+  try {
+    // TAINT: hook name and arguments flow to command injection!
+    // Shell scripts executed with user-controlled arguments
+    const response = await axios.post(
+      `${SERVICES.goNotifications}/api/hooks/execute`,
+      req.body,
+      { headers: { 'X-API-Key': req.headers['x-api-key'] || 'dev-api-key-12345' } }
+    );
+    res.json(response.data);
+  } catch (error) {
+    res.status(error.response?.status || 500).json({
+      error: error.response?.data || error.message,
+    });
+  }
+});
+
+app.get('/api/notifications/logs/:filename', async (req, res) => {
+  try {
+    // TAINT: filename flows to path traversal in go_notifications!
+    // Can read arbitrary files: ../../../etc/passwd
+    const response = await axios.get(
+      `${SERVICES.goNotifications}/api/logs/${req.params.filename}`,
+      { headers: { 'X-API-Key': req.headers['x-api-key'] || 'dev-api-key-12345' } }
+    );
+    res.json(response.data);
+  } catch (error) {
+    res.status(error.response?.status || 500).json({
+      error: error.response?.data || error.message,
+    });
+  }
+});
+
+app.get('/api/notifications', async (req, res) => {
+  try {
+    // TAINT: query params flow to SQL injection in go_notifications!
+    // order_by and limit parameters are vulnerable
+    const response = await axios.get(
+      `${SERVICES.goNotifications}/api/notifications`,
+      {
+        params: req.query,
+        headers: { 'X-API-Key': req.headers['x-api-key'] || 'dev-api-key-12345' }
+      }
+    );
+    res.json(response.data);
+  } catch (error) {
+    res.status(error.response?.status || 500).json({
+      error: error.response?.data || error.message,
+    });
+  }
+});
+
+// Cross-service notification flow: Event → Gateway → Go Notifications → External
+app.post('/api/users/:userId/notify', async (req, res) => {
+  const userId = req.params.userId;
+
+  try {
+    // Step 1: Get user details from Python API
+    const userResponse = await axios.get(
+      `${SERVICES.pythonApi}/status/${userId}`
+    );
+
+    // Step 2: Send notification via Go service
+    // TAINT: User data from Python API flows to Go notifications
+    const notifyResponse = await axios.post(
+      `${SERVICES.goNotifications}/api/notify`,
+      {
+        channel: req.body.channel || 'webhook',
+        recipient: req.body.recipient || userResponse.data.email,
+        subject: `Update for ${userResponse.data.username || userId}`,
+        message: req.body.message || 'You have a new notification',
+        metadata: {
+          user_id: userId,
+          ...req.body.metadata,
+        },
+      },
+      { headers: { 'X-API-Key': 'dev-api-key-12345' } }
+    );
+
+    res.json({
+      user: userResponse.data,
+      notification: notifyResponse.data,
+      taint_flow: 'Gateway → Python API → Go Notifications → External Webhook',
+    });
+  } catch (error) {
+    res.status(500).json({
+      error: error.message,
+      step: error.config?.url || 'unknown',
+    });
+  }
+});
+
+// -----------------------------------------------------------------------------
 // Health & Diagnostics
 // -----------------------------------------------------------------------------
 
@@ -429,6 +582,7 @@ app.listen(PORT, () => {
   - Python API (api/):           ${SERVICES.pythonApi}
   - Python Pipeline:             ${SERVICES.pipeline}
   - Rust Backend:                ${SERVICES.rustBackend}
+  - Go Notifications:            ${SERVICES.goNotifications}
 
   Taint Flow Examples:
   1. GET  /api/users/search?username=admin' OR '1'='1
@@ -442,6 +596,18 @@ app.listen(PORT, () => {
 
   4. POST /api/users/:id/full-enrich
      → Gateway → Python API → Rust → Pipeline (multi-service flow)
+
+  5. POST /api/notifications/webhook/test {url: "http://169.254.169.254/..."}
+     → Gateway → go_notifications/ SSRF
+
+  6. POST /api/notifications/template {template: "{{shell \\"id\\"}}", ...}
+     → Gateway → go_notifications/ template injection (SSTI)
+
+  7. POST /api/notifications/hooks/execute {hook: "../../../etc/passwd", ...}
+     → Gateway → go_notifications/ command injection + path traversal
+
+  8. GET  /api/notifications?order_by=id;DROP TABLE notifications;--
+     → Gateway → go_notifications/ SQL injection
 
 ================================================================================
   `);

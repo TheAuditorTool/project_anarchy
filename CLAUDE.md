@@ -1,3 +1,26 @@
+<!-- THEAUDITOR:START -->
+# TheAuditor Agent System
+
+For full documentation, see: @/.auditor_venv/.theauditor_tools/agents/AGENTS.md
+
+**Quick Route:**
+| Intent | Agent | Triggers |
+|--------|-------|----------|
+| Plan changes | planning.md | plan, architecture, design, structure |
+| Refactor code | refactor.md | refactor, split, extract, modularize |
+| Security audit | security.md | security, vulnerability, XSS, SQLi, CSRF |
+| Trace dataflow | dataflow.md | dataflow, trace, source, sink |
+
+**The One Rule:** Database first. Always run `aud blueprint --structure` before planning.
+
+**Agent Locations:**
+- Full protocols: .auditor_venv/.theauditor_tools/agents/*.md
+- Slash commands: /theauditor:planning, /theauditor:security, /theauditor:refactor, /theauditor:dataflow
+
+**Setup:** Run `aud setup-ai --target . --sync` to reinstall agents.
+
+<!-- THEAUDITOR:END -->
+
 # CLAUDE.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
@@ -19,30 +42,30 @@ Project Anarchy is a **test repository for code auditing tools** (specifically T
 The root project is now a **connected polyglot system** with real data flows:
 
 ```
-┌─────────────────────────────────────────────────────────────────────┐
-│                        project_anarchy/                              │
-├─────────────────────────────────────────────────────────────────────┤
-│                                                                      │
-│  frontend/services/api_service.js                                    │
-│       │                                                              │
-│       │ fetch()                                                      │
-│       ▼                                                              │
-│  ┌─────────────┐                                                     │
-│  │   gateway/  │  :4000 (Node.js/Express)                           │
-│  │  src/index.js                                                     │
-│  └──────┬──────┘                                                     │
-│         │                                                            │
-│    ┌────┴─────┬─────────────┬─────────────┐                         │
-│    │          │             │             │                         │
-│    ▼          ▼             ▼             ▼                         │
-│ ┌──────┐  ┌────────────┐  ┌─────────────────┐  ┌───────────────┐   │
-│ │ api/ │  │python_     │  │ rust_backend/   │  │ (future svc)  │   │
-│ │:8000 │  │pipeline/   │  │ :8080           │  │               │   │
-│ │      │  │:8001       │  │                 │  │               │   │
-│ └──────┘  └────────────┘  └─────────────────┘  └───────────────┘   │
-│                                                                      │
-│  Connected: ~90 errors with real taint flows                        │
-└─────────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                           project_anarchy/                                   │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  frontend/services/api_service.js                                            │
+│       │                                                                      │
+│       │ fetch()                                                              │
+│       ▼                                                                      │
+│  ┌─────────────┐                                                             │
+│  │   gateway/  │  :4000 (Node.js/Express)                                   │
+│  │  src/index.js                                                             │
+│  └──────┬──────┘                                                             │
+│         │                                                                    │
+│    ┌────┴─────┬─────────────┬─────────────┬──────────────────┐              │
+│    │          │             │             │                  │              │
+│    ▼          ▼             ▼             ▼                  ▼              │
+│ ┌──────┐  ┌────────────┐  ┌───────────┐  ┌────────────────────┐            │
+│ │ api/ │  │python_     │  │rust_      │  │ go_notifications/  │            │
+│ │:8000 │  │pipeline/   │  │backend/   │  │ :8082 (Go)         │            │
+│ │(Py)  │  │:8001 (Py)  │  │:8080 (Rs) │  │ SSRF, SSTI, CMDi   │            │
+│ └──────┘  └────────────┘  └───────────┘  └────────────────────┘            │
+│                                                                              │
+│  Connected: ~120+ errors with real taint flows (Node, Python, Rust, Go)     │
+└─────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ### Data Flows (Real Cross-Boundary Taint)
@@ -54,6 +77,11 @@ The root project is now a **connected polyglot system** with real data flows:
 | Path Traversal | `readFile(path)` | frontend → gateway → rust_backend | main.rs:143 |
 | Code Injection | `importCSV(path)` | frontend → gateway → python_pipeline | data_ingestion.py:33 |
 | SSRF | `fetchExternalUrl(url)` | frontend → gateway → rust_backend | main.rs:240 |
+| SSRF (Go) | `webhookTest(url)` | frontend → gateway → go_notifications | webhook.go:72 |
+| Template Injection | `sendTemplate(tpl)` | frontend → gateway → go_notifications | renderer.go:69 |
+| Command Injection (Go) | `executeHook(hook)` | frontend → gateway → go_notifications | handlers.go:178 |
+| SQL Injection (Go) | `listNotifications(orderBy)` | frontend → gateway → go_notifications | db.go:91 |
+| Path Traversal (Go) | `readLogFile(filename)` | frontend → gateway → go_notifications | handlers.go:195 |
 
 ### Running the Unified System
 
@@ -69,19 +97,38 @@ cd python_pipeline && uvicorn api.fastapi_endpoint:app --port 8001  # :8001
 
 # Terminal 4: Rust Backend
 cd rust_backend && cargo run               # :8080
+
+# Terminal 5: Go Notifications
+cd go_notifications && go run ./cmd/server # :8082
 ```
 
 ### Test Commands
 ```bash
-# SQL Injection
+# SQL Injection (Python)
 curl "http://localhost:4000/api/users/search?username=admin'%20OR%20'1'='1"
 
-# Path Traversal
+# Path Traversal (Rust)
 curl "http://localhost:4000/api/files/read?path=../../../etc/passwd"
 
-# Command Injection
+# Command Injection (Rust)
 curl -X POST http://localhost:4000/api/exec -H "Content-Type: application/json" \
   -d '{"command": "whoami", "args": []}'
+
+# SSRF (Go)
+curl -X POST http://localhost:4000/api/notifications/webhook/test \
+  -H "Content-Type: application/json" \
+  -d '{"url": "http://169.254.169.254/latest/meta-data/"}'
+
+# Template Injection (Go)
+curl -X POST http://localhost:4000/api/notifications/template \
+  -H "Content-Type: application/json" \
+  -d '{"template": "{{shell \"id\"}}", "channel": "file", "recipient": "test.log"}'
+
+# SQL Injection (Go)
+curl "http://localhost:4000/api/notifications?order_by=id;DROP%20TABLE%20users;--"
+
+# Path Traversal (Go)
+curl "http://localhost:4000/api/notifications/logs/..%2F..%2F..%2Fetc%2Fpasswd"
 ```
 
 ---
@@ -226,4 +273,10 @@ Do NOT use for:
 | Python API | `api/app.py` | User operations, auth |
 | Python Pipeline | `python_pipeline/api/fastapi_endpoint.py` | Data processing |
 | Rust Backend | `rust_backend/src/main.rs` | Performance-critical ops |
+| Go Notifications | `go_notifications/cmd/server/main.go` | Entry point |
+| Go API Handlers | `go_notifications/internal/api/handlers.go` | HTTP handlers (taint sources) |
+| Go Channels | `go_notifications/internal/channels/*.go` | Notification sinks (SSRF, path traversal) |
+| Go Templates | `go_notifications/internal/templates/renderer.go` | Template injection (SSTI) |
+| Go Storage | `go_notifications/internal/storage/db.go` | SQL injection |
+| Go Shell Hooks | `go_notifications/scripts/hooks/*.sh` | Command injection |
 | Architecture Doc | `ARCHITECTURE.md` | Full system documentation |
