@@ -24,7 +24,7 @@ Thumbs.db
 .idea/
 *.swp
 *.swo
-
+teamsop.md*
 # Project specific
 .auditor_venv/
 .pf/

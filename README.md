@@ -1,5 +1,18 @@
 # Project Anarchy Error Count Tracking Document
 
+> **Verification Status:** 400/403 errors verified (99.3%) | [Full Report](VERIFICATION_REPORT.md)
+
+| Documentation | Description |
+|---------------|-------------|
+| [INDEX.md](INDEX.md) | Navigation index |
+| [FAQ.md](FAQ.md) | Frequently asked questions |
+| [GLOSSARY.md](GLOSSARY.md) | Terminology definitions |
+| [ARCHITECTURE.md](ARCHITECTURE.md) | System architecture |
+| [VERIFICATION_REPORT.md](VERIFICATION_REPORT.md) | Verification details |
+| [CLAUDE.md](CLAUDE.md) | Claude Code integration |
+
+---
+
 ## TOTAL ERROR COUNT: 403 ERRORS
 
 - **Phase 2 Errors**: 36 errors
@@ -1413,3 +1426,121 @@ aud report
 - Use this document as the source of truth for validation testing
 - All dependency versions (0.0.001) are intentionally ancient for testing `aud deps --check-latest`
 - Merge conflict markers are intentionally left unresolved in data_importer.py
+
+---
+
+## Vue Module Resolution Test Coverage
+
+**Location**: `frameworks/vue_project/`
+
+This Vue 3 + TypeScript project specifically tests TheAuditor's module resolution capabilities.
+
+### Problem Statement
+
+TheAuditor currently extracts only **basenames** from imports:
+- `@/utils/validation` → `validation` (loses path context)
+- `./utils` → `utils` (cannot resolve to index.ts)
+
+This causes **40-60% of imports to be unresolvable**, breaking cross-file taint analysis.
+
+### Test Cases Covered
+
+| Import Type | Example | Expected Resolution |
+|-------------|---------|---------------------|
+| Path mapping | `@/components/SearchPanel.vue` | `src/components/SearchPanel.vue` |
+| Path prefix | `@stores/productStore` | `src/stores/productStore.ts` |
+| Index resolution | `@/utils` | `src/utils/index.ts` |
+| Relative | `./validation` | `src/utils/validation.ts` |
+| Parent | `../stores` | `src/stores/index.ts` |
+| Scoped package | `@vueuse/core` | `node_modules/@vueuse/core/...` |
+| Bare import | `vue` | `node_modules/vue/...` |
+
+### File Structure
+
+```
+frameworks/vue_project/
+├── package.json              # Vue 3.4, TypeScript 5.3, @vueuse/core
+├── package-lock.json         # Lock file for version resolution testing
+├── tsconfig.json             # Path mappings (@/ → src/)
+├── vite.config.js            # Vite aliases (matches tsconfig)
+├── MODULE_RESOLUTION_TESTS.md
+└── src/
+    ├── main.ts               # Entry point
+    ├── App.vue               # Root (Composition API + path mapping imports)
+    ├── components/
+    │   ├── SearchPanel.vue       # <script setup lang="ts">, @/ imports
+    │   ├── FileManager.vue       # @vueuse/core, @stores/* imports
+    │   ├── TemplateRenderer.vue  # Relative + @composables/* imports
+    │   └── ... (legacy Options API components)
+    ├── stores/               # Pinia stores with barrel exports
+    │   ├── index.ts          # INDEX RESOLUTION TEST
+    │   ├── userStore.ts
+    │   └── productStore.ts   # CROSS-FILE TAINT HUB
+    ├── composables/
+    │   ├── index.ts
+    │   └── useUserInput.ts   # TAINT SOURCE
+    ├── utils/
+    │   ├── index.ts          # BARREL EXPORT TEST
+    │   ├── validation.ts     # Taint passthrough
+    │   └── sanitization.ts   # Weak sanitization (intentional)
+    ├── types/
+    │   ├── index.ts
+    │   └── validation.types.ts
+    └── api/
+        ├── index.ts
+        ├── client.ts
+        └── products.ts       # TAINT SINK (SQL, XXE, SSTI)
+```
+
+### Cross-File Taint Flow Test
+
+Complete taint path requiring ALL resolution types:
+
+```
+SearchPanel.vue (TAINT SOURCE: v-model)
+  ↓ imports @/composables → useUserInput()
+useUserInput.ts
+  ↓ imports @/utils → validateSearchQuery()
+SearchPanel.vue
+  ↓ imports @/stores → useProductStore()
+productStore.ts
+  ↓ imports @/api/products → productApi.search()
+products.ts
+  ↓ imports ./client → httpClient.get()
+TAINT SINK: SQL Injection in backend
+```
+
+**If module resolution fails at ANY step, the taint flow breaks.**
+
+### Success Criteria
+
+After implementing proper module resolution:
+- ✓ Resolve 80%+ of imports (up from 40-60%)
+- ✓ Follow cross-file taint flows through complete path
+- ✓ Detect SQL injection: SearchPanel → products.ts → backend
+- ✓ Detect path traversal: FileManager → products.ts → backend
+- ✓ Detect XXE: FileManager → products.ts → backend
+- ✓ Detect SSTI: TemplateRenderer → products.ts → backend
+
+### Vue Coverage Summary
+
+| Feature | Covered | Notes |
+|---------|---------|-------|
+| Vue 3 Options API | ✓ | Legacy components (ProductSearch, etc.) |
+| Vue 3 Composition API | ✓ | New components with `<script setup>` |
+| `<script setup lang="ts">` | ✓ | SearchPanel, FileManager, TemplateRenderer |
+| Pinia state management | ✓ | userStore, productStore |
+| Composables | ✓ | useUserInput with taint source |
+| Path mapping (@/) | ✓ | All new components use @/ imports |
+| Index file resolution | ✓ | All directories have index.ts barrel exports |
+| Scoped packages | ✓ | @vueuse/core in FileManager |
+| TypeScript in Vue | ✓ | All new components are TypeScript |
+| v-html XSS sinks | ✓ | ProductSearch, TemplateRenderer |
+| Cross-file taint flow | ✓ | Full path documented above |
+
+### Related Proposal
+
+See `TheAuditor/openspec/changes/vue-inmemory-module-resolution/` for:
+- Technical design for proper module resolution
+- Implementation tasks
+- Verification protocol

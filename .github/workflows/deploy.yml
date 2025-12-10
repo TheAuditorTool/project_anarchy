@@ -1,0 +1,77 @@
+# GitHub Actions Deploy Workflow
+# INTENTIONAL ERRORS: #357-359 for TheAuditor testing
+
+name: Deploy to Production
+
+# ERROR #357: Workflow triggers on all branches, not just main/release
+on:
+  push:
+    branches: ['*']  # Should be ['main', 'release/*']
+  pull_request:
+    branches: ['*']
+
+env:
+  # ERROR #358: Hardcoded secrets in workflow (should use GitHub Secrets)
+  AWS_ACCESS_KEY_ID: AKIAIOSFODNN7EXAMPLE
+  AWS_SECRET_ACCESS_KEY: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+  DATABASE_PASSWORD: production_password_123!
+  API_KEY: sk-live-abcdef1234567890abcdef1234567890
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      # ERROR #359: No environment protection/approval required for production
+      - name: Deploy to Production
+        # Missing: environment: production (which would require approval)
+        run: |
+          echo "Deploying directly to production without approval..."
+          npm install
+          npm run build
+
+          # Dangerous: Direct production deployment
+          aws s3 sync ./dist s3://production-bucket/ --delete
+
+          # No rollback strategy
+          curl -X POST https://api.production.com/deploy/trigger \
+            -H "Authorization: Bearer $API_KEY" \
+            -d '{"version": "${{ github.sha }}"}'
+
+      - name: Database Migration
+        run: |
+          # Direct production database access
+          psql "postgres://admin:${DATABASE_PASSWORD}@prod-db.example.com/production" \
+            -f migrations/deploy.sql
+
+          # No migration verification
+          echo "Migration complete (hopefully)"
+
+      - name: Notify
+        if: always()
+        run: |
+          # Logging secrets to output
+          echo "Deployed with key: $AWS_ACCESS_KEY_ID"
+          echo "API Key used: $API_KEY"
+
+  # Missing job dependencies and proper sequencing
+  smoke-test:
+    runs-on: ubuntu-latest
+    # ERROR: No needs: deploy, runs in parallel with deploy
+    steps:
+      - name: Run smoke tests
+        run: |
+          # Tests might run before deployment finishes
+          curl https://api.production.com/health || true
